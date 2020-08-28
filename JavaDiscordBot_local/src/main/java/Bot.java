@@ -76,7 +76,7 @@ public class Bot extends ListenerAdapter{
 		}
 		else {
 			String message=event.getMessage().getContentDisplay();
-			message.toLowerCase();
+			message=message.toLowerCase();
 			if(!message.startsWith("nb!")) {
 				return;
 			}
@@ -207,6 +207,9 @@ public class Bot extends ListenerAdapter{
 	//returns true if the name and the id match and the id is from the last state of the game
 	private boolean isCurrentViergewinnt(String name,String id) {
 		Set<IDNameViergewinnt> cur=nameToViergewinnt.get(name);
+		if(cur==null) {
+			nameToViergewinnt.put(name, new HashSet<IDNameViergewinnt>());
+		}
 		for(IDNameViergewinnt v:cur) {
 			if(v.id.equals(id))return true;
 		}
@@ -314,7 +317,7 @@ public class Bot extends ListenerAdapter{
 				ans+="nb!"+sc.nextLine()+"\n";
 				ans+=sc.nextLine()+"\n\n";
 			}
-			
+			sc.close();
 		}
 		catch(Exception e) {
 			ans=e.getMessage();
@@ -391,6 +394,7 @@ public class Bot extends ListenerAdapter{
 				}
 				line=br.readLine();
 			}
+			br.close();
 		} catch (Exception e) {
 			event.getChannel().sendMessage(e.toString()).queue();
 		}
