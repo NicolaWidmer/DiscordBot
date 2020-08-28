@@ -59,7 +59,7 @@ public class ExprEvaluator {
     			return variables.get(s);
     		}
     		else {
-    			throw new EvaluationException("Evaluations error: the variable "+s+" is undifined");
+    			throw new EvaluationException("Evaluations error: the variable "+s+" is undefined");
     		}
     		
     	}

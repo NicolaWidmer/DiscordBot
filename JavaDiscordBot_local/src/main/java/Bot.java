@@ -76,11 +76,16 @@ public class Bot extends ListenerAdapter{
 		}
 		else {
 			String message=event.getMessage().getContentDisplay();
-			message=message.toLowerCase();
+			
 			if(!message.startsWith("nb!")) {
 				return;
 			}
 			message=message.substring(3);
+			if(message.startsWith("play")) {
+				String url =message.replace("play","");
+				loadAndPlay(event.getTextChannel(),url);
+			}
+			message=message.toLowerCase();
 			if(message.equals("help")) {
 				help(event);
 			}
@@ -89,10 +94,6 @@ public class Bot extends ListenerAdapter{
 			}
 			else if(message.equals("skip")) {
 				skipTrack(event.getTextChannel());
-			}
-			else if(message.startsWith("play")) {
-				String url =message.substring(5);
-				loadAndPlay(event.getTextChannel(),url);
 			}
 			else if(message.startsWith("leave")) {
 				leaveChanal(event);
@@ -151,8 +152,7 @@ public class Bot extends ListenerAdapter{
 				makeTicTacToe(event);
 			}
 			else if(message.startsWith("tictactoe move")) {
-				String number=message.replace("TicTacToe move", "");
-				number= number.replace("tictactoe move", "");
+				String number= message.replace("tictactoe move", "");
 				number= number.replace(" ","");
 				try {
 					int num=Integer.valueOf(number);
@@ -163,7 +163,8 @@ public class Bot extends ListenerAdapter{
 				}
 			}
 			else if(message.startsWith("gamble")) {
-				String number=message.substring(7);
+				String number=message.replace("gamble","");
+				number=number.replace(" ", "");
 				try {
 					int num=Integer.valueOf(number);
 					gamble(num,event);
@@ -355,9 +356,9 @@ public class Bot extends ListenerAdapter{
 				line=name+" "+cur;
 			}
 			else {
-				int bonus=(int)((0.5-Math.random())*num);
+				int bonus=(int)((1-2*Math.random())*(num+1));
 				int n=bonus+cur;
-				if(bonus>0) {
+				if(bonus>=0) {
 					event.getChannel().sendMessage("You won "+bonus+" points and you now have "+n+" points").queue();
 				}
 				else {
