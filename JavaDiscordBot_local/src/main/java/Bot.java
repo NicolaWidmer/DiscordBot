@@ -210,6 +210,7 @@ public class Bot extends ListenerAdapter{
 		Set<IDNameViergewinnt> cur=nameToViergewinnt.get(name);
 		if(cur==null) {
 			nameToViergewinnt.put(name, new HashSet<IDNameViergewinnt>());
+			return false;
 		}
 		for(IDNameViergewinnt v:cur) {
 			if(v.id.equals(id))return true;
