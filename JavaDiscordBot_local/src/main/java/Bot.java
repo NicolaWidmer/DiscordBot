@@ -54,12 +54,6 @@ public class Bot extends ListenerAdapter{
 	 
 	 private TicTacToeAi tictactoeai;
 	
-	public static void main(String[] args)throws LoginException, InterruptedException {
-		
-		JDA jda= new JDABuilder("NjU1MDgwMzU0NTM3MDEzMjQ4.Xlzmmw.s7FTtulznxArLZ56tWYm1c3BZrg").addEventListeners(new Bot()).build();
-		
-	}
-	
 	public Bot() {
 		this.musicManagers = new HashMap<>();
 	    this.playerManager = new DefaultAudioPlayerManager();
@@ -82,6 +76,7 @@ public class Bot extends ListenerAdapter{
 		}
 		else {
 			String message=event.getMessage().getContentDisplay();
+			message.toLowerCase();
 			if(!message.startsWith("nb!")) {
 				return;
 			}
@@ -89,17 +84,17 @@ public class Bot extends ListenerAdapter{
 			if(message.equals("help")) {
 				help(event);
 			}
-			else if(message.equals("join")||message.equals("Join")) {
+			else if(message.equals("join")) {
 				joinChanal(event);
 			}
-			else if(message.equals("skip")||message.equals("Skip")) {
+			else if(message.equals("skip")) {
 				skipTrack(event.getTextChannel());
 			}
-			else if(message.startsWith("play")||message.startsWith("Play")) {
+			else if(message.startsWith("play")) {
 				String url =message.substring(5);
 				loadAndPlay(event.getTextChannel(),url);
 			}
-			else if(message.startsWith("leave")||message.startsWith("Leave")) {
+			else if(message.startsWith("leave")) {
 				leaveChanal(event);
 			}
 			else if(message.startsWith("ev")||message.startsWith("evaluate")) {
@@ -110,51 +105,76 @@ public class Bot extends ListenerAdapter{
 				evaluate(event,expresion);
 				
 			}
-			else if(message.startsWith("new Viergewinnt PvB")||message.startsWith("new viergewinnt pvb")) {
+			else if(message.startsWith("new viergewinnt pvb")) {
 				makeViergewinntAi(event.getChannel(),event.getAuthor().getId());
 			}
-			else if(message.startsWith("new Viergewinnt BvP")||message.startsWith("new viergewinnt bvp")) {
+			else if(message.startsWith("new viergewinnt bvp")) {
 				makeViergewinntAiBotStart(event.getChannel(),event.getAuthor().getId());
 			}
-			else if(message.startsWith("new Viergewinnt")||message.startsWith("new viergewinnt")) {
+			else if(message.startsWith("new viergewinnt")) {
 				List<User> mentioned =event.getMessage().getMentionedUsers();
 				if(mentioned.size()==0) {
 					makeViergewinnt(event.getChannel());
 				}
 				else {
 					String player2=mentioned.get(0).getId();
-					makeViergewinntMovePvP(event.getAuthor().getId(),player2,event.getChannel());
+					makeViergewinntPvP(event.getAuthor().getId(),player2,event.getChannel());
 				}
 			}
-			else if(message.startsWith("Viergewinnt move")||message.startsWith("viergewinnt move")) {
+			else if(message.startsWith("viergewinnt move")) {
 				String number=message.replace("Viergewinnt move", "");
 				number= number.replace("viergewinnt move", "");
 				number= number.replace(" ","");
 				int num=Integer.valueOf(number);
 				viergewinntMove(num,event.getChannel());
 			}
-			else if(message.startsWith("new TicTacToe PvB")||message.startsWith("new tictactoe pvb")) {
+			else if(message.startsWith("new tictactoe pvb")) {
 				makeTicTacToeAi(event);
 			}
-			else if(message.startsWith("new TicTacToe BvP")||message.startsWith("new tictactoe bvp")) {
+			else if(message.startsWith("new tictactoe bvp")) {
 				makeTicTacToeAiBotStart(event);
 			}
-			else if(message.startsWith("TicTacToe move PvB")||message.startsWith("tictactoe move PvB")) {
+			else if(message.startsWith("tictactoe move PvB")) {
 				String number=message.replace("TicTacToe move PvB", "");
 				number= number.replace("tictactoe move pvb", "");
 				number= number.replace(" ","");
-				int num=Integer.valueOf(number);
-				tictactoeMoveAi(num,event);
+				try {
+					int num=Integer.valueOf(number);
+					tictactoeMoveAi(num,event);
+				}
+				catch(Exception e){
+					event.getChannel().sendMessage(number+" is not a number").queue();
+				}
+				
 			}
-			else if(message.startsWith("new TicTacToe")||message.startsWith("new tictactoe")){
+			else if(message.startsWith("new tictactoe")){
 				makeTicTacToe(event);
 			}
-			else if(message.startsWith("TicTacToe move")||message.startsWith("tictactoe move")) {
+			else if(message.startsWith("tictactoe move")) {
 				String number=message.replace("TicTacToe move", "");
 				number= number.replace("tictactoe move", "");
 				number= number.replace(" ","");
-				int num=Integer.valueOf(number);
-				tictactoeMove(num,event);
+				try {
+					int num=Integer.valueOf(number);
+					tictactoeMove(num,event);
+				}
+				catch(Exception e){
+					event.getChannel().sendMessage(number+" is not a number").queue();
+				}
+			}
+			else if(message.startsWith("gamble")) {
+				String number=message.substring(7);
+				try {
+					int num=Integer.valueOf(number);
+					gamble(num,event);
+				}
+				catch(Exception e){
+					event.getChannel().sendMessage(number+" is not a number").queue();
+				}
+				
+			}
+			else if(message.startsWith("points")) {
+				displayPoints(event);
 			}
 			else if(message.startsWith("ping")) {
 				ping(event);
@@ -184,6 +204,7 @@ public class Bot extends ListenerAdapter{
 		
 	}
 	
+	//returns true if the name and the id match and the id is from the last state of the game
 	private boolean isCurrentViergewinnt(String name,String id) {
 		Set<IDNameViergewinnt> cur=nameToViergewinnt.get(name);
 		for(IDNameViergewinnt v:cur) {
@@ -191,12 +212,6 @@ public class Bot extends ListenerAdapter{
 		}
 		return false;
 	}
-	
-	
-	
-	
-	
-	
 	
 	
 	
@@ -307,6 +322,80 @@ public class Bot extends ListenerAdapter{
 		event.getChannel().sendMessage(ans).queue();
 	}
 	
+	public void gamble(int num,MessageReceivedEvent event) {
+		if(num<0) {
+			event.getChannel().sendMessage("You cant gamble negative points").queue();
+		}
+		String name = event.getAuthor().toString();
+		try {
+			File originalFile = new File("Points");
+			BufferedReader br = new BufferedReader(new FileReader(originalFile));
+			File tempFile = new File("tempfile");
+			PrintWriter pw = new PrintWriter(new FileWriter(tempFile));
+			String line=br.readLine();
+			int cur=-1;
+			while(line!=null){
+				if(line.startsWith(name)) {
+					cur=Integer.valueOf(line.replace(name+" ", ""));
+				}
+				else {
+					pw.println(line);
+					pw.flush();
+				}
+				line=br.readLine();
+			}
+			if(cur==-1) {
+				cur=1000;
+			}
+			if(cur<num) {
+				event.getChannel().sendMessage("You dont have enough points to gamble").queue();
+				line=name+" "+cur;
+			}
+			else {
+				int bonus=(int)((0.5-Math.random())*num);
+				int n=bonus+cur;
+				if(bonus>0) {
+					event.getChannel().sendMessage("You won "+bonus+" points and you now have "+n+" points").queue();
+				}
+				else {
+					event.getChannel().sendMessage("You lost "+bonus+" points and you now have "+Math.abs(n)+" points").queue();
+				}
+				line=name+" "+n;
+			}
+			pw.println(line);
+			pw.flush();
+			pw.close();
+	        br.close();
+	        if (!originalFile.delete()) {
+	            System.out.println("Could not delete file");
+	            return;
+	        }
+	        if (!tempFile.renameTo(originalFile)) {
+	            System.out.println("Could not rename file");
+	        }
+
+		}
+		catch(Exception e) {
+			event.getChannel().sendMessage(e.toString()).queue();
+		}
+	}
+	
+	public void displayPoints(MessageReceivedEvent event) {
+		String name=event.getAuthor().toString();
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(new File("Points")));
+			String line=br.readLine();
+			while(line!=null) {
+				if(line.startsWith(name)) {
+					event.getChannel().sendMessage(event.getAuthor().getAsMention()+" you have"+line.replace(name, "")+" points").queue();
+				}
+				line=br.readLine();
+			}
+		} catch (Exception e) {
+			event.getChannel().sendMessage(e.toString()).queue();
+		}
+	}
+	
 	public void evaluate(MessageReceivedEvent event,String s) {
 		if(s.isEmpty()) {
 			event.getChannel().sendMessage("You need to give me a funktion to evaluate").queue();
@@ -358,15 +447,15 @@ public class Bot extends ListenerAdapter{
 		}
 	}
 	
-	private void makeViergewinntMovePvP(String player1,String player2,MessageChannel channal) {
+	private void makeViergewinntPvP(String player1,String player2,MessageChannel channal) {
 		if(nameToViergewinnt.get(player1)==null) {
 			nameToViergewinnt.put(player1, new HashSet<IDNameViergewinnt>());
 		}
-		IDNameViergewinnt inv =new IDNameViergewinnt("0",player2,new Viergewinnt(":blue_circle:",":red_circle:",":white_large_square:"));
-		nameToViergewinnt.get(player1).add(inv);
 		if(nameToViergewinnt.get(player2)==null) {
 			nameToViergewinnt.put(player2, new HashSet<IDNameViergewinnt>());
 		}
+		IDNameViergewinnt inv =new IDNameViergewinnt("0",player2,new Viergewinnt(":blue_circle:",":red_circle:",":white_large_square:"));
+		nameToViergewinnt.get(player1).add(inv);
 		channal.sendMessage(inv.viergewinnt.toStringDiscord()).queue(message -> {
         	message.addReaction("\u0031\u20E3").queue();
         	message.addReaction("\u0032\u20E3").queue();
@@ -541,7 +630,7 @@ public class Bot extends ListenerAdapter{
 	
 	private void ping(MessageReceivedEvent event) {
 		
-        event.getChannel().sendMessage("hi").queue(message -> {
+        event.getChannel().sendMessage("hi "+event.getAuthor().getAsMention()).queue(message -> {
         	message.addReaction("\u0031\u20E3").queue();
         	message.addReaction("\u0032\u20E3").queue();
         	message.addReaction("\u0033\u20E3").queue();
@@ -549,12 +638,13 @@ public class Bot extends ListenerAdapter{
         	message.addReaction("\u0035\u20E3").queue();
         	message.addReaction("\u0036\u20E3").queue();
         	message.addReaction("\u0037\u20E3").queue();
+        	message.addReaction("🆕").queue();
         });
 	}
 	
 	
-	//react on Discord reactions
 	
+	//react on Discord reactions
 	private void reactOnViergewinntAi(GuildMessageReactionAddEvent event,String name){
 		String reaktion= event.getReactionEmote().getName();
 		if(reaktion.equals("1⃣")) {
