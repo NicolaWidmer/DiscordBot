@@ -33,8 +33,9 @@ import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEve
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.managers.AudioManager;
 
-import Viergewinnt.Viergewinnt;
 import Viergewinnt.ViergewinntAi;
+
+import Game.Game;
 
 public class Bot extends ListenerAdapter{
 	
@@ -42,12 +43,7 @@ public class Bot extends ListenerAdapter{
 	 private final Map<Long, GuildMusicManager> musicManagers;
 	 private ExprEvaluator ee;
 	 
-	 private Map<String,Set<IDNameViergewinnt>> nameToViergewinnt;
-	 
-	 
-	 private TicTacToe tictactoe;
-	 
-	 private TicTacToeAi tictactoeai;
+	 private Map<String,Set<IDNameGame>>  nameToGame;
 	
 	public Bot() {
 		this.musicManagers = new HashMap<>();
@@ -55,7 +51,7 @@ public class Bot extends ListenerAdapter{
 	    AudioSourceManagers.registerRemoteSources(playerManager);
 	    AudioSourceManagers.registerLocalSource(playerManager);
 	    ee= new ExprEvaluator();
-	    nameToViergewinnt = new HashMap<String,Set<IDNameViergewinnt>>();
+	    nameToGame = new HashMap<String,Set<IDNameGame>>();
 	    
 	}
 	
@@ -120,36 +116,22 @@ public class Bot extends ListenerAdapter{
 				}
 			}
 			else if(message.startsWith("new tictactoe pvb")) {
-				makeTicTacToeAi(event);
+				makeTicTacToeAi(event.getChannel(),event.getAuthor().getId());
 			}
 			else if(message.startsWith("new tictactoe bvp")) {
-				makeTicTacToeAiBotStart(event);
-			}
-			else if(message.startsWith("tictactoe move PvB")) {
-				String number=message.replace("TicTacToe move PvB", "");
-				number= number.replace("tictactoe move pvb", "");
-				number= number.replace(" ","");
-				try {
-					int num=Integer.valueOf(number);
-					tictactoeMoveAi(num,event);
-				}
-				catch(Exception e){
-					event.getChannel().sendMessage(number+" is not a number").queue();
-				}
-				
+				makeTicTacToeAiBotStart(event.getChannel(),event.getAuthor().getId());
 			}
 			else if(message.startsWith("new tictactoe")){
-				makeTicTacToe(event);
-			}
-			else if(message.startsWith("tictactoe move")) {
-				String number= message.replace("tictactoe move", "");
-				number= number.replace(" ","");
-				try {
-					int num=Integer.valueOf(number);
-					tictactoeMove(num,event);
+				List<User> mentioned =event.getMessage().getMentionedUsers();
+				if(mentioned.size()==0) {
+					event.getChannel().sendMessage("You need to @ your oponnent").queue();
 				}
-				catch(Exception e){
-					event.getChannel().sendMessage(number+" is not a number").queue();
+				else if(mentioned.size()>1) {
+					event.getChannel().sendMessage("You can only challenge one oponnent").queue();
+				}
+				else {
+					String player2=mentioned.get(0).getId();
+					makeTicTacToe(event.getAuthor().getId(),player2,event.getChannel());
 				}
 			}
 			else if(message.startsWith("gamble")) {
@@ -179,12 +161,17 @@ public class Bot extends ListenerAdapter{
 		if(event.getMember().getUser().equals(event.getJDA().getSelfUser()))return;
 		String id=event.getMessageId();
 		String name=event.getUserId();
-		if(isCurrentViergewinnt(name,id)) {
-			Set<IDNameViergewinnt> cur=nameToViergewinnt.get(name);
-			for(IDNameViergewinnt v:cur) {
+		if(isCurrentGame(name,id)) {
+			Set<IDNameGame> cur= nameToGame.get(name);
+			for(IDNameGame v:cur) {
 				if(v.id.equals(id)) {
-					if(v.name.equals("AI"))reactOnViergewinntAi(name,v,event);
-					else reactOnViergewinntPvP(name,v,event);
+					if(v.game instanceof ViergewinntAi)
+						if(v.name.equals("AI"))reactOnViergewinntAi(name,v,event);
+						else reactOnViergewinntPvP(name,v,event);
+					else if(v.game instanceof TicTacToeAi) {
+						if(v.name.equals("AI"))reactOnTicTacToeAi(name,v,event);
+						else reactOnTicTacToePvP(name,v,event);
+					}
 				}
 			}
 		}
@@ -192,13 +179,13 @@ public class Bot extends ListenerAdapter{
 	}
 	
 	//returns true if the name and the id match and the id is from the last state of the game
-	private boolean isCurrentViergewinnt(String name,String id) {
-		Set<IDNameViergewinnt> cur=nameToViergewinnt.get(name);
+	private boolean isCurrentGame(String name,String id) {
+		Set<IDNameGame> cur= nameToGame.get(name);
 		if(cur==null) {
-			nameToViergewinnt.put(name, new HashSet<IDNameViergewinnt>());
+			 nameToGame.put(name, new HashSet<IDNameGame>());
 			return false;
 		}
-		for(IDNameViergewinnt v:cur) {
+		for(IDNameGame v:cur) {
 			if(v.id.equals(id))return true;
 		}
 		return false;
@@ -406,15 +393,15 @@ public class Bot extends ListenerAdapter{
 	
 	
 	private void makeViergewinntPvP(String player1,String player2,MessageChannel channal) {
-		if(nameToViergewinnt.get(player1)==null) {
-			nameToViergewinnt.put(player1, new HashSet<IDNameViergewinnt>());
+		if(nameToGame.get(player1)==null) {
+			 nameToGame.put(player1, new HashSet<IDNameGame>());
 		}
-		if(nameToViergewinnt.get(player2)==null) {
-			nameToViergewinnt.put(player2, new HashSet<IDNameViergewinnt>());
+		if(nameToGame.get(player2)==null) {
+			nameToGame.put(player2, new HashSet<IDNameGame>());
 		}
-		IDNameViergewinnt inv =new IDNameViergewinnt("0",player2,new ViergewinntAi(":blue_circle:",":red_circle:",":white_large_square:",0));
-		nameToViergewinnt.get(player1).add(inv);
-		channal.sendMessage(inv.viergewinnt.toStringDiscord()).queue(message -> {
+		IDNameGame inv =new IDNameGame("0",player2,new ViergewinntAi(":blue_circle:",":red_circle:",":white_large_square:",0));
+		nameToGame.get(player1).add(inv);
+		channal.sendMessage(inv.game.toStringDiscord()).queue(message -> {
         	message.addReaction("\u0031\u20E3").queue();
         	message.addReaction("\u0032\u20E3").queue();
         	message.addReaction("\u0033\u20E3").queue();
@@ -425,11 +412,11 @@ public class Bot extends ListenerAdapter{
         	inv.id=message.getId();
         	});	
 	}
-	private void viergewinntMovePvP(int num,MessageChannel channal,String name,IDNameViergewinnt inv) {
+	private void viergewinntMovePvP(int num,MessageChannel channal,String name,IDNameGame inv) {
 		try {
-			Viergewinnt viergewinnt=inv.viergewinnt;
-			viergewinnt.insert(num);
-			channal.sendMessage(viergewinnt.toStringDiscord()).queue(message -> {
+			Game game=inv.game;
+			game.makeMove(num);
+			channal.sendMessage(game.toStringDiscord()).queue(message -> {
 	        	message.addReaction("\u0031\u20E3").queue();
 	        	message.addReaction("\u0032\u20E3").queue();
 	        	message.addReaction("\u0033\u20E3").queue();
@@ -440,9 +427,9 @@ public class Bot extends ListenerAdapter{
 	        	inv.id=message.getId();
 			});
 			String opponent=inv.name;
-			nameToViergewinnt.get(name).remove(inv);
-			if(!viergewinnt.hasWinner()) {
-				nameToViergewinnt.get(opponent).add(inv);
+			nameToGame.get(name).remove(inv);
+			if(!game.hasWinner()) {
+				nameToGame.get(opponent).add(inv);
 				inv.name=name;
 			}
 		}
@@ -453,13 +440,13 @@ public class Bot extends ListenerAdapter{
 	
 	private void makeViergewinntAi(MessageChannel channal,String name) {
 	
-		if(nameToViergewinnt.get(name)==null) {
-			nameToViergewinnt.put(name, new HashSet<IDNameViergewinnt>());
+		if(nameToGame.get(name)==null) {
+			nameToGame.put(name, new HashSet<IDNameGame>());
 		}
 		
-		IDNameViergewinnt inv =new IDNameViergewinnt("0","AI",new ViergewinntAi(":blue_circle:",":red_circle:",":white_large_square:",6));
-		nameToViergewinnt.get(name).add(inv);
-		channal.sendMessage(inv.viergewinnt.toStringDiscord()).queue(message -> {
+		IDNameGame inv =new IDNameGame("0","AI",new ViergewinntAi(":blue_circle:",":red_circle:",":white_large_square:",6));
+		nameToGame.get(name).add(inv);
+		channal.sendMessage(inv.game.toStringDiscord()).queue(message -> {
         	message.addReaction("\u0031\u20E3").queue();
         	message.addReaction("\u0032\u20E3").queue();
         	message.addReaction("\u0033\u20E3").queue();
@@ -472,14 +459,14 @@ public class Bot extends ListenerAdapter{
 	}
 	
 	private void makeViergewinntAiBotStart(MessageChannel channal,String name) {
-		if(nameToViergewinnt.get(name)==null) {
-			nameToViergewinnt.put(name, new HashSet<IDNameViergewinnt>());
+		if(nameToGame.get(name)==null) {
+			nameToGame.put(name, new HashSet<IDNameGame>());
 		}
-		IDNameViergewinnt inv =new IDNameViergewinnt("0","AI",new ViergewinntAi(":blue_circle:",":red_circle:",":white_large_square:",6));
-		nameToViergewinnt.get(name).add(inv);
+		IDNameGame inv =new IDNameGame("0","AI",new ViergewinntAi(":blue_circle:",":red_circle:",":white_large_square:",6));
+		nameToGame.get(name).add(inv);
 		try {
-			inv.viergewinnt.aiMove();
-			channal.sendMessage(inv.viergewinnt.toStringDiscord()).queue(message -> {
+			inv.game.aiMove();
+			channal.sendMessage(inv.game.toStringDiscord()).queue(message -> {
 	        	message.addReaction("\u0031\u20E3").queue();
 	        	message.addReaction("\u0032\u20E3").queue();
 	        	message.addReaction("\u0033\u20E3").queue();
@@ -501,14 +488,14 @@ public class Bot extends ListenerAdapter{
 		}
 	}
 	
-	private void viergewinntMoveAi(int num,MessageChannel channal,String name,IDNameViergewinnt inv) {
-		ViergewinntAi viergewinntai=inv.viergewinnt;
+	private void viergewinntMoveAi(int num,MessageChannel channal,String name,IDNameGame inv) {
+		Game game=inv.game;
 		try {
-			viergewinntai.insert(num);
-			channal.sendMessage(viergewinntai.toString()).queue();
+			game.makeMove(num);
+			channal.sendMessage(game.toString()).queue();
 			try {
-				viergewinntai.aiMove();
-				channal.sendMessage(viergewinntai.toStringDiscord()).queue(message -> {
+				game.aiMove();
+				channal.sendMessage(game.toStringDiscord()).queue(message -> {
 		        	message.addReaction("\u0031\u20E3").queue();
 		        	message.addReaction("\u0032\u20E3").queue();
 		        	message.addReaction("\u0033\u20E3").queue();
@@ -542,51 +529,148 @@ public class Bot extends ListenerAdapter{
 	
 	
 	
-	private void makeTicTacToe(MessageReceivedEvent event) {
-		tictactoe= new TicTacToe(":x:",":o:",":white_large_square:");
-		event.getChannel().sendMessage(tictactoe.toStringDiscord()).queue();
+	private void makeTicTacToe(String player1,String player2,MessageChannel channal) {
+		if(nameToGame.get(player1)==null) {
+			 nameToGame.put(player1, new HashSet<IDNameGame>());
+		}
+		if(nameToGame.get(player2)==null) {
+			nameToGame.put(player2, new HashSet<IDNameGame>());
+		}
+		IDNameGame inv =new IDNameGame("0",player2,new TicTacToeAi(":x:",":o:",":white_large_square:"));
+		nameToGame.get(player1).add(inv);
+		channal.sendMessage(inv.game.toStringDiscord()).queue(message -> {
+       	message.addReaction("\u0031\u20E3").queue();
+       	message.addReaction("\u0032\u20E3").queue();
+       	message.addReaction("\u0033\u20E3").queue();
+       	message.addReaction("\u0034\u20E3").queue();
+       	message.addReaction("\u0035\u20E3").queue();
+       	message.addReaction("\u0036\u20E3").queue();
+       	message.addReaction("\u0037\u20E3").queue();
+       	message.addReaction("\u0038\u20E3").queue();
+       	message.addReaction("\u0039\u20E3").queue();
+       	inv.id=message.getId();
+       	});	
 	}
 	
-	private void tictactoeMove(int num,MessageReceivedEvent event) {
+	private void tictactoeMovePvP(int num,MessageChannel channal,String name,IDNameGame inv) {
 		try {
-			tictactoe.makeMovePlayer(num);
-			event.getChannel().sendMessage(tictactoe.toStringDiscord()).queue();
+			Game game=inv.game;
+			game.makeMove(num);
+			channal.sendMessage(game.toStringDiscord()).queue(message -> {
+	        	message.addReaction("\u0031\u20E3").queue();
+	        	message.addReaction("\u0032\u20E3").queue();
+	        	message.addReaction("\u0033\u20E3").queue();
+	        	message.addReaction("\u0034\u20E3").queue();
+	        	message.addReaction("\u0035\u20E3").queue();
+	        	message.addReaction("\u0036\u20E3").queue();
+	        	message.addReaction("\u0037\u20E3").queue();
+	        	message.addReaction("\u0038\u20E3").queue();
+	        	message.addReaction("\u0039\u20E3").queue();
+	        	inv.id=message.getId();
+			});
+			String opponent=inv.name;
+			nameToGame.get(name).remove(inv);
+			if(!game.hasWinner()) {
+				nameToGame.get(opponent).add(inv);
+				inv.name=name;
+			}
 		}
 		catch(Exception e) {
-			event.getChannel().sendMessage(e.getMessage()).queue();
+			channal.sendMessage(e.getMessage()).queue();
 		}
 	}
 	
-	private void makeTicTacToeAi(MessageReceivedEvent event) {
-		tictactoeai= new TicTacToeAi(":x:",":o:",":white_large_square:");
-		event.getChannel().sendMessage(tictactoeai.toStringDiscord()).queue();
+	
+	private void makeTicTacToeAi(MessageChannel channal,String name) {
+		if(nameToGame.get(name)==null) {
+			nameToGame.put(name, new HashSet<IDNameGame>());
+		}
+		
+		IDNameGame inv =new IDNameGame("0","AI",new TicTacToeAi(":x:",":o:",":white_large_square:"));
+		nameToGame.get(name).add(inv);
+		channal.sendMessage(inv.game.toStringDiscord()).queue(message -> {
+        	message.addReaction("\u0031\u20E3").queue();
+        	message.addReaction("\u0032\u20E3").queue();
+        	message.addReaction("\u0033\u20E3").queue();
+        	message.addReaction("\u0034\u20E3").queue();
+        	message.addReaction("\u0035\u20E3").queue();
+        	message.addReaction("\u0036\u20E3").queue();
+        	message.addReaction("\u0037\u20E3").queue();
+        	message.addReaction("\u0038\u20E3").queue();
+        	message.addReaction("\u0039\u20E3").queue();
+        	inv.id=message.getId();
+        	});	
 	}
 	
-	private void makeTicTacToeAiBotStart(MessageReceivedEvent event) {
-		tictactoeai= new TicTacToeAi(":x:",":o:",":white_large_square:");
+	private void makeTicTacToeAiBotStart(MessageChannel channal,String name) {
+		if(nameToGame.get(name)==null) {
+			nameToGame.put(name, new HashSet<IDNameGame>());
+		}
+		IDNameGame inv =new IDNameGame("0","AI",new TicTacToeAi(":x:",":o:",":white_large_square:"));
+		nameToGame.get(name).add(inv);
 		try {
-			tictactoeai.aiMove();
-			event.getChannel().sendMessage(tictactoeai.toStringDiscord()).queue();
+			inv.game.aiMove();
+			channal.sendMessage(inv.game.toStringDiscord()).queue(message -> {
+	        	message.addReaction("\u0031\u20E3").queue();
+	        	message.addReaction("\u0032\u20E3").queue();
+	        	message.addReaction("\u0033\u20E3").queue();
+	        	message.addReaction("\u0034\u20E3").queue();
+	        	message.addReaction("\u0035\u20E3").queue();
+	        	message.addReaction("\u0036\u20E3").queue();
+	        	message.addReaction("\u0037\u20E3").queue();
+	        	message.addReaction("\u0038\u20E3").queue();
+	        	message.addReaction("\u0039\u20E3").queue();
+	        	message.addReaction("🆕").queue();
+	        	inv.id=message.getId();
+	        });
 		}
 		catch(Exception e) {
-			event.getChannel().sendMessage(e.getMessage()).queue();
-		}
-	}
-	
-	private void tictactoeMoveAi(int num,MessageReceivedEvent event) {
-		try {
-			tictactoeai.makeMovePlayer(num);
-			event.getChannel().sendMessage(tictactoeai.toString()).queue();
 			try {
-				tictactoeai.aiMove();
-				event.getChannel().sendMessage(tictactoeai.toStringDiscord()).queue();
+				channal.sendMessage(e.getMessage()).queue();
+			}
+			catch(Exception p) {
+				System.out.println(e.getMessage());
+			}
+		}
+	}
+	
+	private void tictactoeMoveAi(int num,MessageChannel channal,String name,IDNameGame inv) {
+		Game game=inv.game;
+		try {
+			game.makeMove(num);
+			channal.sendMessage(game.toString()).queue();
+			try {
+				game.aiMove();
+				channal.sendMessage(game.toStringDiscord()).queue(message -> {
+		        	message.addReaction("\u0031\u20E3").queue();
+		        	message.addReaction("\u0032\u20E3").queue();
+		        	message.addReaction("\u0033\u20E3").queue();
+		        	message.addReaction("\u0034\u20E3").queue();
+		        	message.addReaction("\u0035\u20E3").queue();
+		        	message.addReaction("\u0036\u20E3").queue();
+		        	message.addReaction("\u0037\u20E3").queue();
+		        	message.addReaction("\u0038\u20E3").queue();
+		        	message.addReaction("\u0039\u20E3").queue();
+		        	message.addReaction("🆕").queue();
+		        	inv.id=message.getId();
+		        });
 			}
 			catch(Exception e) {
-				event.getChannel().sendMessage(e.getMessage()).queue();;
+				try {
+					channal.sendMessage(e.getMessage()).queue();
+				}
+				catch(Exception p) {
+					System.out.println(e.getMessage());
+				}
 			}
 		}
 		catch(Exception e) {
-			event.getChannel().sendMessage(e.getMessage()).queue();
+			try {
+				channal.sendMessage(e.getMessage()).queue();
+			}
+			catch(Exception p) {
+				System.out.println(e.getMessage());
+			}
 		}
 		
 	}
@@ -608,7 +692,7 @@ public class Bot extends ListenerAdapter{
 	
 	
 	//react on Discord reactions
-	private void reactOnViergewinntAi(String name,IDNameViergewinnt inv,GuildMessageReactionAddEvent event){
+	private void reactOnViergewinntAi(String name,IDNameGame inv,GuildMessageReactionAddEvent event){
 		String reaktion= event.getReactionEmote().getName();
 		if(reaktion.equals("1⃣")) {
 			viergewinntMoveAi(1,event.getChannel(),name,inv);
@@ -638,7 +722,7 @@ public class Bot extends ListenerAdapter{
 	}
 	
 
-	private void reactOnViergewinntPvP(String name,IDNameViergewinnt inv,GuildMessageReactionAddEvent event) {
+	private void reactOnViergewinntPvP(String name,IDNameGame inv,GuildMessageReactionAddEvent event) {
 		String reaktion= event.getReactionEmote().getName();
 		if(reaktion.equals("1⃣")) {
 			viergewinntMovePvP(1,event.getChannel(),name,inv);
@@ -663,20 +747,88 @@ public class Bot extends ListenerAdapter{
 		}
 	}
 	
+	private void reactOnTicTacToeAi(String name,IDNameGame inv,GuildMessageReactionAddEvent event){
+		String reaktion= event.getReactionEmote().getName();
+		if(reaktion.equals("1⃣")) {
+			tictactoeMoveAi(1,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("2⃣")) {
+			tictactoeMoveAi(2,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("3⃣")) {
+			tictactoeMoveAi(3,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("4⃣")) {
+			tictactoeMoveAi(4,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("5⃣")) {
+			tictactoeMoveAi(5,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("6⃣")) {
+			tictactoeMoveAi(6,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("7⃣")) {
+			tictactoeMoveAi(7,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("8⃣")) {
+			tictactoeMoveAi(8,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("9⃣")) {
+			tictactoeMoveAi(9,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("🆕")) {
+			makeTicTacToeAiBotStart(event.getChannel(),name);
+		}
+		
+	}
+	
+	private void reactOnTicTacToePvP(String name,IDNameGame inv,GuildMessageReactionAddEvent event){
+		String reaktion= event.getReactionEmote().getName();
+		if(reaktion.equals("1⃣")) {
+			tictactoeMovePvP(1,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("2⃣")) {
+			tictactoeMovePvP(2,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("3⃣")) {
+			tictactoeMovePvP(3,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("4⃣")) {
+			tictactoeMovePvP(4,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("5⃣")) {
+			tictactoeMovePvP(5,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("6⃣")) {
+			tictactoeMovePvP(6,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("7⃣")) {
+			tictactoeMovePvP(7,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("8⃣")) {
+			tictactoeMovePvP(8,event.getChannel(),name,inv);
+		}
+		else if(reaktion.equals("9⃣")) {
+			tictactoeMovePvP(9,event.getChannel(),name,inv);
+		}
+		
+		
+	}
+	
 	
 		
 	
 }
 
 //has the ID, the game itself and the opponent of a game as a field
-class IDNameViergewinnt{
+class IDNameGame{
 	String id;
 	String name;
-	ViergewinntAi viergewinnt;
-	public IDNameViergewinnt(String i,String n,ViergewinntAi v) {
+	Game game;
+	public IDNameGame(String i,String n,Game v) {
 		id=i;
 		name=n;
-		viergewinnt=v;
+		game=v;
 	}
 	public String toString() {
 		return "id: "+id+"\n"+"name: "+name;

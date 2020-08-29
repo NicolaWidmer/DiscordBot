@@ -1,6 +1,9 @@
 package TicTacToe;
 
-public class TicTacToeAi extends TicTacToe{
+import Game.Game;
+import Game.IllegalMoveException;
+
+public class TicTacToeAi extends TicTacToe implements Game{
 	/*
 	 * This is a TicTacToe AI based on the minimax algorithm
 	 */

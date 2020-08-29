@@ -2,6 +2,8 @@ package TicTacToe;
 
 import java.util.Scanner;
 
+import Game.IllegalMoveException;
+
 public class Main {
 
 	public static void main(String[] args)throws IllegalMoveException {
@@ -13,7 +15,7 @@ public class Main {
 			if(cur==-1)break;
 			else if(cur==0)t.aiMove();
 			else if(cur==10)t=new TicTacToeAi("x","o"," ");
-			else t.makeMovePlayer(cur);
+			else t.makeMove(cur);
 			System.out.println(t);
 		}
 

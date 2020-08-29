@@ -1,6 +1,9 @@
 package Viergewinnt;
 
-public class ViergewinntAi extends Viergewinnt{
+import Game.Game;
+import Game.IllegalMoveException;
+
+public class ViergewinntAi extends Viergewinnt implements Game {
 	/*
 	 * This is a Viergewinnt AI based on the minimax algorithm
 	 */
@@ -26,7 +29,7 @@ public class ViergewinntAi extends Viergewinnt{
 				}
 			}
 		}
-		insert(maxj);
+		makeMove(maxj);
 	}
 	
 	private void tryColumn(int column,String charToUse) {

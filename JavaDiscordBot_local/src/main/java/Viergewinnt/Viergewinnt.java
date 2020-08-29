@@ -1,5 +1,7 @@
 package Viergewinnt;
 
+import Game.IllegalMoveException;
+
 public class Viergewinnt {
 	protected String [][] grid;
 	protected String char1;
@@ -24,7 +26,7 @@ public class Viergewinnt {
 		cur=char1;
 	}
 	
-	public void insert(int column) throws IllegalMoveException{
+	public void makeMove(int column) throws IllegalMoveException{
 		if(hasWinner) {
 			throw new IllegalMoveException("There is already a winner");
 		}
@@ -66,6 +68,10 @@ public class Viergewinnt {
 	
 	public boolean hasWinner() {
 		return hasWinner;
+	}
+	
+	public String winner() {
+		return winner;
 	}
 	
 	
