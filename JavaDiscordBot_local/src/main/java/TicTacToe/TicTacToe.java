@@ -1,5 +1,7 @@
 package TicTacToe;
 
+import Game.IllegalMoveException;
+
 public class TicTacToe {
 	protected String[][] grid;
 	/*
@@ -35,7 +37,7 @@ public class TicTacToe {
 		winner=filler;
 	}
 	
-	public void makeMovePlayer(int place) throws IllegalMoveException{
+	public void makeMove(int place) throws IllegalMoveException{
 		if(winner!=filler)throw new IllegalMoveException("The Game is over");
 		else if(place<1||place>9)throw new IllegalMoveException("The fields have numbers between 1 and 9");
 		else if(getField(place)!=filler)throw new IllegalMoveException("The fields is occupied");
@@ -85,6 +87,14 @@ public class TicTacToe {
 		
 	}
 	
+	public boolean hasWinner() {
+		return winner==char1||winner==char2;
+	}
+	
+	public String winner() {
+		return winner;
+	}
+	
 	public String toString() {
 		String ans="";
 		if(winner!=filler) {
@@ -106,22 +116,7 @@ public class TicTacToe {
 	}
 	
 	public String toStringDiscord() {
-		String ans="";
-		if(winner!=filler) {
-			if(winner=="tie") {
-				ans+="The game is tied";
-			}
-			else {
-				ans+="The winner is "+winner;
-			}
-			ans+="\n \n";
-		}
-		for(int i=0;i<3;i++) {
-			for(int j=0;j<3;j++) {
-				ans+=grid[i][j];
-			}
-			ans+="\n";
-		}
+		String ans=toString();
 		ans+="\n";
 		ans+=":one::two::three:\n";
 		ans+=":four::five::six:\n";

@@ -1,5 +1,7 @@
 package Viergewinnt;
 
+import Game.IllegalMoveException;
+
 public class Viergewinnt {
 	protected String [][] grid;
 	protected String char1;
@@ -24,7 +26,7 @@ public class Viergewinnt {
 		cur=char1;
 	}
 	
-	public void insert(int column) throws IllegalMoveException{
+	public void makeMove(int column) throws IllegalMoveException{
 		if(hasWinner) {
 			throw new IllegalMoveException("There is already a winner");
 		}
@@ -66,6 +68,10 @@ public class Viergewinnt {
 	
 	public boolean hasWinner() {
 		return hasWinner;
+	}
+	
+	public String winner() {
+		return winner;
 	}
 	
 	
@@ -240,19 +246,7 @@ public class Viergewinnt {
 	}
 	
 	public String toStringDiscord() {
-		String ans="";
-		if(hasWinner) {
-			ans+=winner+" is the winner \n \n";
-		}
-		else if(isTie) {
-			ans+="The Game is tied \n \n";
-		}
-		for(int i=0;i<6;i++) {
-			for(int j=0;j<7;j++) {
-				ans+=grid[i][j];
-			}
-			ans+="\n";
-		}
+		String ans=toString();
 		ans+=":one::two::three::four::five::six::seven:";
 		return ans;
 	}

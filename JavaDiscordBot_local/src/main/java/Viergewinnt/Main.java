@@ -2,6 +2,8 @@ package Viergewinnt;
 
 import java.util.Scanner;
 
+import Game.IllegalMoveException;
+
 public class Main {
 
 	public static void main(String[] args) throws IllegalMoveException{
@@ -18,7 +20,7 @@ public class Main {
 				v= new ViergewinntAi("x","o"," ",6);
 			}
 			else {
-				v.insert(i);
+				v.makeMove(i);
 			}
 			System.out.println(v);
 		}
