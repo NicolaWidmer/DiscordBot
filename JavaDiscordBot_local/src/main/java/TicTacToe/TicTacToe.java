@@ -106,22 +106,7 @@ public class TicTacToe {
 	}
 	
 	public String toStringDiscord() {
-		String ans="";
-		if(winner!=filler) {
-			if(winner=="tie") {
-				ans+="The game is tied";
-			}
-			else {
-				ans+="The winner is "+winner;
-			}
-			ans+="\n \n";
-		}
-		for(int i=0;i<3;i++) {
-			for(int j=0;j<3;j++) {
-				ans+=grid[i][j];
-			}
-			ans+="\n";
-		}
+		String ans=toString();
 		ans+="\n";
 		ans+=":one::two::three:\n";
 		ans+=":four::five::six:\n";

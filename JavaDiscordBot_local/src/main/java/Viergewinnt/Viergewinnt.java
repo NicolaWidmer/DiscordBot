@@ -240,19 +240,7 @@ public class Viergewinnt {
 	}
 	
 	public String toStringDiscord() {
-		String ans="";
-		if(hasWinner) {
-			ans+=winner+" is the winner \n \n";
-		}
-		else if(isTie) {
-			ans+="The Game is tied \n \n";
-		}
-		for(int i=0;i<6;i++) {
-			for(int j=0;j<7;j++) {
-				ans+=grid[i][j];
-			}
-			ans+="\n";
-		}
+		String ans=toString();
 		ans+=":one::two::three::four::five::six::seven:";
 		return ans;
 	}
