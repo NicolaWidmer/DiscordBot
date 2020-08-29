@@ -73,6 +73,7 @@ public class Bot extends ListenerAdapter{
 			message=message.substring(3);
 			if(message.startsWith("play")) {
 				String url =message.replace("play","");
+				url=url.replace(" ","");
 				loadAndPlay(event.getTextChannel(),url);
 			}
 			message=message.toLowerCase();
@@ -182,7 +183,7 @@ public class Bot extends ListenerAdapter{
 	private boolean isCurrentGame(String name,String id) {
 		Set<IDNameGame> cur= nameToGame.get(name);
 		if(cur==null) {
-			 nameToGame.put(name, new HashSet<IDNameGame>());
+			nameToGame.put(name, new HashSet<IDNameGame>());
 			return false;
 		}
 		for(IDNameGame v:cur) {
