@@ -1,0 +1,24 @@
+help 
+To get a list of all commands.
+join
+The BOT will join the current voice channel.
+skip
+Skip the current track.
+play
+Add a new track to the Queue
+leave 
+The BOT leaves the the current voice channel.
+evaluate or ev
+The BOT will evaluate a mathematical function for you.
+new Viergewinnt (@player) (points) 
+The BOT will start a new game of Viergewinnt.
+new Viergewinnt (PvB/BvP) (points)
+Start a new game of Viergewinnt against the Bot. PvB if the Player should start and BvP if the Bot should start.
+new TicTacToe (@player) (points)
+The BOT will start a new game of TicTacToe.
+new TicTacToe (PvB/BvP) (points)
+Start a new game of TicTacToe against the Bot. PvB if the Player should start and BvP if the Bot should start.
+gamble (points)
+gamble your points
+points
+display your points
