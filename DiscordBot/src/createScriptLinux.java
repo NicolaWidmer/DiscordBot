@@ -6,7 +6,7 @@ import java.io.OutputStream;
 public class createScriptLinux {
 	
 	public static void main(String[] args) throws IOException {
-		String script="scripts/discordscript.sh/";
+		String script="../scripts/discordscript.sh/";
 		File outfile = new File(script);
 		try {
 			outfile.createNewFile();
