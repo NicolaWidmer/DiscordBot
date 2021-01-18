@@ -3,7 +3,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class creatScriptLinux {
+public class createScriptLinux {
+	
 	public static void main(String[] args) throws IOException {
 		String script="scripts/discordscript.sh/";
 		File outfile = new File(script);
