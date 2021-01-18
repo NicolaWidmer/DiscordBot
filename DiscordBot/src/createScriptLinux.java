@@ -42,6 +42,7 @@ public class createScriptLinux {
 		stream.write("rm -r ../build\n".getBytes());
 		stream.write("javac -d ../build -cp ".getBytes());
 		stream.write(libs.replace(" ",":").getBytes());
+		stream.write(" ".getBytes());
 		stream.write(src.getBytes());
 		stream.write("\n".getBytes());
 		libs=libs.replace(" ",":");
