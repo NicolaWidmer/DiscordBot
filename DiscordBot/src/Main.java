@@ -8,7 +8,7 @@ public class Main {
 public static void main(String[] args)throws LoginException, InterruptedException {
 		
 		String token="";
-		JDA jda= new JDABuilder(token).addEventListeners(new Bot()).build();
+		JDA jda= JDABuilder.createDefault(token).addEventListeners(new Bot()).build();
 		
 	}
 
