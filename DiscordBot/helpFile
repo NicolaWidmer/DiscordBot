@@ -1,13 +1,5 @@
 help 
 To get a list of all commands.
-join
-The BOT will join the current voice channel.
-skip
-Skip the current track.
-play
-Add a new track to the Queue
-leave 
-The BOT leaves the the current voice channel.
 evaluate or ev
 The BOT will evaluate a mathematical function for you.
 new Viergewinnt (@player) (points) 

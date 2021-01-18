@@ -2,54 +2,26 @@
 import java.io.*;
 import java.util.*;
 
-import javax.security.auth.login.LoginException;
-
-import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import Evalator.ExprEvaluator;
-import Musik.GuildMusicManager;
-import Musik.AudioPlayerSendHandler;
-import Musik.TrackScheduler;
-import TicTacToe.TicTacToe;
 import TicTacToe.TicTacToeAi;
-import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.managers.AudioManager;
-
 import Viergewinnt.ViergewinntAi;
 
 import Game.Game;
 
 public class Bot extends ListenerAdapter{
 	
-	 private final AudioPlayerManager playerManager;
-	 private final Map<Long, GuildMusicManager> musicManagers;
 	 private ExprEvaluator ee;
 	 
 	 private Map<String,Set<IDNameGame>>  nameToGame;
 	
 	public Bot() {
-		this.musicManagers = new HashMap<>();
-	    this.playerManager = new DefaultAudioPlayerManager();
-	    AudioSourceManagers.registerRemoteSources(playerManager);
-	    AudioSourceManagers.registerLocalSource(playerManager);
 	    ee= new ExprEvaluator();
 	    nameToGame = new HashMap<String,Set<IDNameGame>>();
 	    
@@ -71,22 +43,9 @@ public class Bot extends ListenerAdapter{
 				return;
 			}
 			message=message.substring(3);
-			if(message.startsWith("play")) {
-				String url =message.replace("play","");
-				loadAndPlay(event.getTextChannel(),url);
-			}
 			message=message.toLowerCase();
 			if(message.equals("help")) {
 				help(event);
-			}
-			else if(message.equals("join")) {
-				joinChanal(event);
-			}
-			else if(message.equals("skip")) {
-				skipTrack(event.getTextChannel());
-			}
-			else if(message.startsWith("leave")) {
-				leaveChanal(event);
 			}
 			else if(message.startsWith("ev")||message.startsWith("evaluate")) {
 				
@@ -160,7 +119,7 @@ public class Bot extends ListenerAdapter{
 	public void onGuildMessageReactionAdd(GuildMessageReactionAddEvent event) {
 		if(event.getMember().getUser().equals(event.getJDA().getSelfUser()))return;
 		String id=event.getMessageId();
-		String name=event.getUserId();
+		String name=event.getUser().getId();
 		if(isCurrentGame(name,id)) {
 			Set<IDNameGame> cur= nameToGame.get(name);
 			for(IDNameGame v:cur) {
@@ -190,99 +149,6 @@ public class Bot extends ListenerAdapter{
 		}
 		return false;
 	}
-	
-	
-	
-	
-	
-	
-	
-	//react on Messages
-	private void joinChanal(MessageReceivedEvent e) {
-		AudioManager audioManager = e.getGuild().getAudioManager();
-		audioManager.openAudioConnection(e.getMember().getVoiceState().getChannel());
-	}
-	
-	private void leaveChanal(MessageReceivedEvent e) {
-		AudioManager audioManager = e.getGuild().getAudioManager();
-		audioManager.closeAudioConnection();
-	}
-	
-	private synchronized GuildMusicManager getGuildAudioPlayer(Guild guild) {
-	    long guildId = Long.parseLong(guild.getId());
-	    GuildMusicManager musicManager = musicManagers.get(guildId);
-
-	    if (musicManager == null) {
-	      musicManager = new GuildMusicManager(playerManager);
-	      musicManagers.put(guildId, musicManager);
-	    }
-
-	    guild.getAudioManager().setSendingHandler(musicManager.getSendHandler());
-
-	    return musicManager;
-	  }
-
-
-	  private void loadAndPlay(final TextChannel channel, final String trackUrl) {
-	    final GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
-
-	    playerManager.loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
-	      @Override
-	      public void trackLoaded(AudioTrack track) {
-	    	  
-	        channel.sendMessage("Adding to queue " + track.getInfo().title).queue();
-
-	        play(channel.getGuild(), musicManager, track);
-	      }
-
-	      @Override
-	      public void playlistLoaded(AudioPlaylist playlist) {
-	        AudioTrack firstTrack = playlist.getSelectedTrack();
-
-	        if (firstTrack == null) {
-	          firstTrack = playlist.getTracks().get(0);
-	        }
-
-	        channel.sendMessage("Adding to queue " + firstTrack.getInfo().title + " (first track of playlist " + playlist.getName() + ")").queue();
-
-	        play(channel.getGuild(), musicManager, firstTrack);
-	      }
-
-	      @Override
-	      public void noMatches() {
-	        channel.sendMessage("Nothing found by " + trackUrl).queue();
-	      }
-
-	      @Override
-	      public void loadFailed(FriendlyException exception) {
-	        channel.sendMessage("Could not play: " + exception.getMessage()).queue();
-	      }
-	    });
-	  }
-
-	  private void play(Guild guild, GuildMusicManager musicManager, AudioTrack track) {
-	    connectToFirstVoiceChannel(guild.getAudioManager());
-
-	    musicManager.scheduler.queue(track);
-	  }
-
-	  private void skipTrack(TextChannel channel) {
-	    GuildMusicManager musicManager = getGuildAudioPlayer(channel.getGuild());
-	    musicManager.scheduler.nextTrack();
-
-	    channel.sendMessage("Skipped to next track.").queue();
-	  }
-
-	  private static void connectToFirstVoiceChannel(AudioManager audioManager) {
-	    if (!audioManager.isConnected() && !audioManager.isAttemptingToConnect()) {
-	      for (VoiceChannel voiceChannel : audioManager.getGuild().getVoiceChannels()) {
-	        audioManager.openAudioConnection(voiceChannel);
-	        break;
-	      }
-	    }
-	  }
-	
-	
 	
 	public void help(MessageReceivedEvent event)  {
 		String ans="";
