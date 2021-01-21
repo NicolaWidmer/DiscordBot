@@ -153,7 +153,7 @@ public class Bot extends ListenerAdapter{
 	public void help(MessageReceivedEvent event)  {
 		String ans="";
 		try {
-			Scanner sc=new Scanner(new File("helpFile"));
+			Scanner sc=new Scanner(new File("../helpFile"));
 			while(sc.hasNext()) {
 				ans+="nb!"+sc.nextLine()+"\n";
 				ans+=sc.nextLine()+"\n\n";
